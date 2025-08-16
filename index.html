@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs="detectionMode: hitTesting; sourceType: webcam; debugUIEnabled: false;">
+      
+      <a-entity camera></a-entity>
+
+      <a-image 
+        id="tiffy-char"
+        src="https://media.giphy.com/media/l2JdUDn40y29d91Sg/giphy.gif" 
+        position="0 -100 0" scale="1.5 1.5 1.5"
+        rotation="-90 0 0"
+        visible="false" ></a-image>
+
+      <a-entity position="0 0 -3">
+        <a-text value="Tap on a flat surface to place TiffyAI Coin 👀" color="yellow" align="center"></a-text>
+      </a-entity>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const scene = document.querySelector('a-scene');
+          const tiffyChar = document.getElementById('tiffy-char');
+
+          scene.addEventListener('arjs-hit-test-result', function(evt) {
+            // When a hit-test result is found (user taps on a surface)
+            if (evt.detail.hit) {
+              const position = evt.detail.hit.position;
+              tiffyChar.setAttribute('position', position);
+              tiffyChar.setAttribute('visible', true); // Make it visible
+              // You might want to remove the instruction text here
+              // document.querySelector('a-text').setAttribute('visible', false); 
+            }
+          });
+        });
+      </script>
+
+    </a-scene>
+  </body>
+</html>
