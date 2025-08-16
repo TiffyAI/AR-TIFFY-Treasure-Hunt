@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-image: url('https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/setting.jpg');
+        }
+
+        #tiffy-char {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            top: 50%; /* Centering the image vertically */
+            left: 50%; /* Centering the image horizontally */
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s linear; /* Smooth movement */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); /* Added a shadow */
+        }
+        
+        #access-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #E94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <img id="tiffy-char" src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" alt="TiffyAI Character">
+        <button id="access-button" style="display: none;">Grant Motion Access</button>
+    </div>
+
+    <script>
+        // Get the image element
+        let tiffyChar = document.getElementById('tiffy-char');
+
+        // Check for device orientation support and handle permissions
+        let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let accessButton = document.getElementById('access-button');
+
+        function handleOrientation(event) {
+            let beta = event.beta; // X-axis (front-to-back tilt)
+            let gamma = event.gamma; // Y-axis (side-to-side tilt)
+
+            // Normalize and clamp gamma for left/right rotation
+            let tiltX = Math.max(-45, Math.min(45, gamma));
+            
+            // Normalize beta for front/back rotation and zoom
+            let tiltY = Math.max(-45, Math.min(45, beta));
+
+            // Calculate zoom scale based on beta (front-to-back tilt)
+            const minScale = 0.5;
+            const maxScale = 2.0;
+            let scaleFactor;
+
+            // Inverted zoom logic:
+            // Tilt forward (beta > 0) = zoom out (scale decreases)
+            // Tilt backward (beta < 0) = zoom in (scale increases)
+            if (beta >= 0) {
+                // Tilt forward: scale from 1.0 down to minScale
+                scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
+            } else {
+                // Tilt backward: scale from 1.0 up to maxScale
+                scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
+            }
+            
+            // Ensure the scale is within the defined range
+            scaleFactor = Math.max(minScale, Math.min(maxScale, scaleFactor));
+            
+            // Apply both rotation and zoom to the image
+            // Adjust values for phone orientation (portrait vs landscape)
+            if (window.innerHeight > window.innerWidth) { // Portrait mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltY}deg) rotateY(${-tiltX}deg) scale(${scaleFactor})`;
+            } else { // Landscape mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scaleFactor})`;
+            }
+        }
+
+        // Handle permissions for iOS 13+
+        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            accessButton.style.display = 'block';
+            accessButton.addEventListener('click', () => {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            accessButton.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            });
+        } else {
+            // For Android and other devices, just add the listener
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+    </script>
+</body>
+</html>
