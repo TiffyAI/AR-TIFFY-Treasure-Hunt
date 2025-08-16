@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>TiffyAI Tilt Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-image: url('https://placehold.co/1920x1080/4A90E2/ffffff?text=Game+Background');
+        }
+
+        #tiffy-char {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s linear; /* Smooth movement */
+        }
+        
+        #instructions {
+            position: absolute;
+            top: 20px;
+            width: 80%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+
+        #access-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #E94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 200;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="instructions">
+            <p>Tilt your phone to move the TiffyAI image!</p>
+        </div>
+        <img id="tiffy-char" src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" alt="TiffyAI Character">
+        <button id="access-button" style="display: none;">Grant Motion Access</button>
+    </div>
+
+    <div id="message-box"></div>
+
+    <script>
+        // Check for device orientation support and handle permissions
+        let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let tiffyChar = document.getElementById('tiffy-char');
+        let accessButton = document.getElementById('access-button');
+        let messageBox = document.getElementById('message-box');
+
+        function showMessage(message) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        function handleOrientation(event) {
+            let beta = event.beta; // X-axis (front-to-back tilt)
+            let gamma = event.gamma; // Y-axis (side-to-side tilt)
+
+            // Clamp values to prevent excessive movement
+            let tiltX = Math.max(-45, Math.min(45, gamma));
+            let tiltY = Math.max(-45, Math.min(45, beta));
+
+            // Adjust values for phone orientation (portrait vs landscape)
+            if (window.innerHeight > window.innerWidth) { // Portrait mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltY}deg) rotateY(${-tiltX}deg)`;
+            } else { // Landscape mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+            }
+        }
+
+        // Handle permissions for iOS 13+
+        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            accessButton.style.display = 'block';
+            accessButton.addEventListener('click', () => {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            accessButton.style.display = 'none';
+                            showMessage("Motion access granted!");
+                        } else {
+                            showMessage("Motion access denied. Game will not work.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        showMessage("An error occurred. Motion access not granted.");
+                    });
+            });
+        } else {
+            // For Android and other devices, just add the listener
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+    </script>
+</body>
+</html>
