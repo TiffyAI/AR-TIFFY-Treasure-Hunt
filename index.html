@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TiffyAI Slideshow</title>
     <style>
         body {
             margin: 0;
@@ -29,18 +28,34 @@
 
         #tiffy-char {
             position: absolute;
-            width: 700px;
-            height: 700px;
+            width: 1000px;
+            height: 1000px;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 1s ease-in-out; /* Added for a smooth fade effect */
+        }
+        
+        #access-button {
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            /* Add a transition for a smoother image fade-in */
-            transition: opacity 1s ease-in-out; 
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #E94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none; /* Hide the button, as it's not needed for a slideshow */
         }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <!-- The main image element for the slideshow -->
         <img id="tiffy-char" src="" alt="TiffyAI Slideshow Image">
     </div>
 
@@ -58,19 +73,29 @@
         ];
         let currentIndex = 0;
 
-        // Function to change the image
+        // Function to change the image with a fade effect
         function changeImage() {
-            // Set the new image source
-            tiffyChar.src = images[currentIndex];
-            
-            // Increment the index, looping back to the start if necessary
-            currentIndex = (currentIndex + 1) % images.length;
+            // Fade out the current image
+            tiffyChar.style.opacity = 0;
+
+            // Wait for the fade-out to complete, then change the source and fade in
+            setTimeout(() => {
+                tiffyChar.src = images[currentIndex];
+                tiffyChar.style.opacity = 1;
+                // Increment the index, looping back to the start if necessary
+                currentIndex = (currentIndex + 1) % images.length;
+            }, 1000); // This should match the CSS transition duration
         }
 
-        // Set the initial image when the page loads
+        // Set the initial image when the page loads and start the slideshow
         window.onload = function() {
-            changeImage();
-            // Start the slideshow, changing the image every ~6.7 seconds (40s / 6 images)
+            // Set the first image immediately
+            tiffyChar.src = images[0];
+            tiffyChar.style.opacity = 1;
+            currentIndex = 1;
+            
+            // Start the slideshow, changing the image every ~6.7 seconds
+            // 40 seconds / 6 images = 6.66... seconds
             setInterval(changeImage, 6700);
         };
     </script>
