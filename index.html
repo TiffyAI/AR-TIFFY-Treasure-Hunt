@@ -33,7 +33,6 @@
             top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: opacity 1s ease-in-out; /* Added for a smooth fade effect */
         }
         
         #access-button {
@@ -49,7 +48,7 @@
             border-radius: 12px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: none; /* Hide the button, as it's not needed for a slideshow */
+            display: none; /* Hidden, as it's not needed for a slideshow */
         }
     </style>
 </head>
@@ -73,30 +72,22 @@
         ];
         let currentIndex = 0;
 
-        // Function to change the image with a fade effect
+        // Function to change the image
         function changeImage() {
-            // Fade out the current image
-            tiffyChar.style.opacity = 0;
-
-            // Wait for the fade-out to complete, then change the source and fade in
-            setTimeout(() => {
-                tiffyChar.src = images[currentIndex];
-                tiffyChar.style.opacity = 1;
-                // Increment the index, looping back to the start if necessary
-                currentIndex = (currentIndex + 1) % images.length;
-            }, 1000); // This should match the CSS transition duration
+            // Set the new image source
+            tiffyChar.src = images[currentIndex];
+            
+            // Increment the index, looping back to the start if necessary
+            currentIndex = (currentIndex + 1) % images.length;
         }
 
-        // Set the initial image when the page loads and start the slideshow
+        // Start the slideshow when the page loads
         window.onload = function() {
             // Set the first image immediately
-            tiffyChar.src = images[0];
-            tiffyChar.style.opacity = 1;
-            currentIndex = 1;
+            changeImage();
             
-            // Start the slideshow, changing the image every ~6.7 seconds
-            // 40 seconds / 6 images = 6.66... seconds
-            setInterval(changeImage, 6700);
+            // Start the slideshow, changing the image every 40 seconds
+            setInterval(changeImage, 40000);
         };
     </script>
 </body>
