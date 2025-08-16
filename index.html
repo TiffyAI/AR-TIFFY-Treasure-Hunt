@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>TiffyAI Slideshow</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-image: url('https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/setting.jpg');
+        }
+
+        #tiffy-char {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Add a transition for a smoother image fade-in */
+            transition: opacity 1s ease-in-out; 
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <img id="tiffy-char" src="" alt="TiffyAI Slideshow Image">
+    </div>
+
+    <script>
+        const tiffyChar = document.getElementById('tiffy-char');
+
+        // Array of image URLs for the slideshow
+        const images = [
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/over.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/ben.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/send.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/spr.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/wide.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/wan.png"
+        ];
+        let currentIndex = 0;
+
+        // Function to change the image
+        function changeImage() {
+            // Set the new image source
+            tiffyChar.src = images[currentIndex];
+            
+            // Increment the index, looping back to the start if necessary
+            currentIndex = (currentIndex + 1) % images.length;
+        }
+
+        // Set the initial image when the page loads
+        window.onload = function() {
+            changeImage();
+            // Start the slideshow, changing the image every ~6.7 seconds (40s / 6 images)
+            setInterval(changeImage, 6700);
+        };
+    </script>
+</body>
+</html>
