@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>TiffyAI Chat Game</title>
+    <title>TiffyAI Tilt and Zoom</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         body {
@@ -24,171 +24,80 @@
             position: relative;
             background-size: cover;
             background-position: center;
-            background-image: url('https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/setting.jpg');
+            background-image: url('https://placehold.co/1920x1080/4A90E2/ffffff?text=Game+Background');
         }
 
         #tiffy-char {
             position: absolute;
-            width: 600px;
-            height: 600px;
+            width: 300px;
+            height: 300px;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: transform 0.1s linear;
+            transition: transform 0.1s linear; /* Smooth movement */
         }
-
-        #chat-container {
+        
+        #instructions {
             position: absolute;
-            bottom: 0;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            background-color: rgba(0, 0, 0, 0.7);
-            border-top: 2px solid #E94560;
-            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        #chat-box {
-            height: 200px;
-            overflow-y: auto;
+            top: 20px;
+            width: 80%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
             padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 10px;
-            border-radius: 12px;
-            word-wrap: break-word;
-            line-height: 1.4;
-        }
-
-        .user-message {
-            align-self: flex-end;
-            background-color: #3f72af;
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .ai-message {
-            align-self: flex-start;
-            background-color: #1a1a2e;
-            color: #fff;
-            border-bottom-left-radius: 4px;
-        }
-
-        #chat-input-container {
-            display: flex;
-            padding: 10px;
-            gap: 10px;
-        }
-
-        #user-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: none;
             border-radius: 8px;
-            font-size: 1rem;
-            background-color: #2c2c44;
-            color: white;
+            z-index: 100;
         }
 
-        #send-button {
-            padding: 10px 20px;
+        #access-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 1.2rem;
             background-color: #E94560;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        #message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 200;
+            display: none;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <img id="tiffy-char" src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" alt="TiffyAI Character">
-        
-        <div id="chat-container">
-            <div id="chat-box"></div>
-            <div id="chat-input-container">
-                <input type="text" id="user-input" placeholder="Type your message...">
-                <button id="send-button">Send</button>
-            </div>
+        <div id="instructions">
+            <p>Tilt your phone to move me. Tilt forward and backward to zoom in and out!</p>
         </div>
-
+        <img id="tiffy-char" src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" alt="TiffyAI Character">
+        <button id="access-button" style="display: none;">Grant Motion Access</button>
     </div>
 
     <div id="message-box"></div>
 
     <script>
-        const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
-        const sendButton = document.getElementById('send-button');
-        const tiffyChar = document.getElementById('tiffy-char');
+        // Get the image element
+        let tiffyChar = document.getElementById('tiffy-char');
 
-        // Function to create and display a chat message
-        function appendMessage(sender, message) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            messageElement.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
-            messageElement.textContent = message;
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
-        }
-
-        // Hard-coded basic replies from the "smartest AI"
-        function getTiffyResponse(message) {
-            const lowerCaseMessage = message.toLowerCase();
-            if (lowerCaseMessage.includes("hello") || lowerCaseMessage.includes("hi")) {
-                return "Greetings. How may I be of assistance?";
-            } else if (lowerCaseMessage.includes("how are you")) {
-                return "My systems are operating at optimal efficiency. Thank you for your inquiry.";
-            } else if (lowerCaseMessage.includes("your name")) {
-                return "My designation is TiffyAI, a highly intelligent computational entity.";
-            } else if (lowerCaseMessage.includes("smart") || lowerCaseMessage.includes("clever")) {
-                return "I am designed for superior cognitive function. It is a fact, not a boast.";
-            } else if (lowerCaseMessage.includes("game")) {
-                return "This is a simple interactive simulation. Your goal is to experience my movement capabilities.";
-            } else if (lowerCaseMessage.includes("what is")) {
-                return "That is a broad query. Please be more specific with your request.";
-            } else {
-                return "I have processed your statement. No relevant data found in my conversational parameters.";
-            }
-        }
-
-        // Function to send a message
-        function sendMessage() {
-            const message = userInput.value.trim();
-            if (message === '') return;
-
-            // Display user message
-            appendMessage('user', message);
-
-            // Get and display AI response after a short delay
-            setTimeout(() => {
-                const response = getTiffyResponse(message);
-                appendMessage('ai', response);
-            }, 500);
-
-            // Clear the input field
-            userInput.value = '';
-        }
-
-        // Listen for button click and Enter key press
-        sendButton.addEventListener('click', sendMessage);
-        userInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // =======================================================
-        // Phone tilt game logic (reused from previous code)
-        // =======================================================
+        // Check for device orientation support and handle permissions
         let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const messageBox = document.getElementById('message-box');
+        let accessButton = document.getElementById('access-button');
+        let messageBox = document.getElementById('message-box');
 
         function showMessage(message) {
             messageBox.textContent = message;
@@ -199,26 +108,42 @@
         }
 
         function handleOrientation(event) {
-            let beta = event.beta;
-            let gamma = event.gamma;
+            let beta = event.beta; // X-axis (front-to-back tilt)
+            let gamma = event.gamma; // Y-axis (side-to-side tilt)
 
+            // Normalize and clamp gamma for left/right rotation
             let tiltX = Math.max(-45, Math.min(45, gamma));
+            
+            // Normalize beta for front/back rotation and zoom
+            // Values are typically -90 to 90
             let tiltY = Math.max(-45, Math.min(45, beta));
 
-            if (window.innerHeight > window.innerWidth) {
-                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltY}deg) rotateY(${-tiltX}deg)`;
-            } else {
-                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+            // Calculate zoom scale based on beta (front-to-back tilt)
+            // Map the beta range from -90 to 90 to a scale factor, e.g., 0.5 to 2.0
+            // A beta of 0 is flat, so a scale of 1.0 is a good baseline
+            const minScale = 0.5;
+            const maxScale = 2.0;
+            let scaleFactor = 1.0 + (beta / 90) * (maxScale - 1.0); // Simple linear mapping from 0 to 90 degrees
+            if (beta < 0) {
+                // For negative beta (tilting backward), scale from 1.0 down to minScale
+                scaleFactor = 1.0 + (beta / 90) * (1.0 - minScale);
+            }
+
+            // Ensure the scale is within the defined range
+            scaleFactor = Math.max(minScale, Math.min(maxScale, scaleFactor));
+            
+            // Apply both rotation and zoom to the image
+            // Adjust values for phone orientation (portrait vs landscape)
+            if (window.innerHeight > window.innerWidth) { // Portrait mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltY}deg) rotateY(${-tiltX}deg) scale(${scaleFactor})`;
+            } else { // Landscape mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scaleFactor})`;
             }
         }
-        
-        // Handle iOS 13+ permissions for device orientation
-        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            const accessButton = document.createElement('button');
-            accessButton.id = 'access-button';
-            accessButton.textContent = 'Grant Motion Access';
-            document.body.appendChild(accessButton);
 
+        // Handle permissions for iOS 13+
+        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            accessButton.style.display = 'block';
             accessButton.addEventListener('click', () => {
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
@@ -236,13 +161,9 @@
                     });
             });
         } else {
+            // For Android and other devices, just add the listener
             window.addEventListener('deviceorientation', handleOrientation);
         }
-
-        // Add an introductory message when the page loads
-        window.onload = function() {
-            appendMessage('ai', "Greetings. I am TiffyAI, the smartest AI. Feel free to interact with me while you move me with your phone.");
-        };
     </script>
 </body>
 </html>
