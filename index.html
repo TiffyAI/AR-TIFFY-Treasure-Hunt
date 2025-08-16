@@ -82,7 +82,7 @@
 <body>
     <div id="game-container">
         <div id="instructions">
-            <p>Tilt your phone to move me. Tilt forward and backward to zoom in and out!</p>
+            <p>Tilt your phone to move me. Tilt forward to zoom out and backward to zoom in!</p>
         </div>
         <img id="tiffy-char" src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" alt="TiffyAI Character">
         <button id="access-button" style="display: none;">Grant Motion Access</button>
@@ -115,20 +115,24 @@
             let tiltX = Math.max(-45, Math.min(45, gamma));
             
             // Normalize beta for front/back rotation and zoom
-            // Values are typically -90 to 90
             let tiltY = Math.max(-45, Math.min(45, beta));
 
             // Calculate zoom scale based on beta (front-to-back tilt)
-            // Map the beta range from -90 to 90 to a scale factor, e.g., 0.5 to 2.0
-            // A beta of 0 is flat, so a scale of 1.0 is a good baseline
             const minScale = 0.5;
             const maxScale = 2.0;
-            let scaleFactor = 1.0 + (beta / 90) * (maxScale - 1.0); // Simple linear mapping from 0 to 90 degrees
-            if (beta < 0) {
-                // For negative beta (tilting backward), scale from 1.0 down to minScale
-                scaleFactor = 1.0 + (beta / 90) * (1.0 - minScale);
-            }
+            let scaleFactor;
 
+            // Inverted zoom logic:
+            // Tilt forward (beta > 0) = zoom out (scale decreases)
+            // Tilt backward (beta < 0) = zoom in (scale increases)
+            if (beta >= 0) {
+                // Tilt forward: scale from 1.0 down to minScale
+                scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
+            } else {
+                // Tilt backward: scale from 1.0 up to maxScale
+                scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
+            }
+            
             // Ensure the scale is within the defined range
             scaleFactor = Math.max(minScale, Math.min(maxScale, scaleFactor));
             
