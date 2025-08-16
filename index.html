@@ -13,7 +13,8 @@
         src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" 
         position="0 -100 0" scale="1.5 1.5 1.5"
         rotation="-90 0 0"
-        visible="false" ></a-image>
+        visible="false"
+      ></a-image>
 
       <a-entity position="0 0 -3">
         <a-text value="👀" color="yellow" align="center"></a-text>
@@ -25,13 +26,11 @@
           const tiffyChar = document.getElementById('tiffy-char');
 
           scene.addEventListener('arjs-hit-test-result', function(evt) {
-            // When a hit-test result is found (user taps on a surface)
+            // When a hit-test result is found
             if (evt.detail.hit) {
               const position = evt.detail.hit.position;
               tiffyChar.setAttribute('position', position);
-              tiffyChar.setAttribute('visible', true); // Make it visible
-              // You might want to remove the instruction text here
-              // document.querySelector('a-text').setAttribute('visible', false); 
+              tiffyChar.setAttribute('visible', true);
             }
           });
         });
