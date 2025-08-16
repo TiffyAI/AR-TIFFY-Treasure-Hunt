@@ -33,6 +33,7 @@
             top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
+            transition: transform 0.1s linear; /* Smooth movement */
         }
         
         #access-button {
@@ -48,18 +49,20 @@
             border-radius: 12px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: none; /* Hidden, as it's not needed for a slideshow */
+            display: none;
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <!-- The main image element for the slideshow -->
-        <img id="tiffy-char" src="" alt="TiffyAI Slideshow Image">
+        <!-- The main image element for both motion control and the slideshow -->
+        <img id="tiffy-char" src="https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/over.png" alt="TiffyAI Character">
+        <button id="access-button" style="display: none;">Grant Motion Access</button>
     </div>
 
     <script>
-        const tiffyChar = document.getElementById('tiffy-char');
+        // Get the image element
+        let tiffyChar = document.getElementById('tiffy-char');
 
         // Array of image URLs for the slideshow
         const images = [
@@ -72,20 +75,82 @@
         ];
         let currentIndex = 0;
 
-        // Function to change the image
-        function changeImage() {
-            // Set the new image source
-            tiffyChar.src = images[currentIndex];
+        // Check for device orientation support and handle permissions
+        let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let accessButton = document.getElementById('access-button');
+
+        // This function handles the motion control, which will apply to the current image
+        function handleOrientation(event) {
+            let beta = event.beta; // X-axis (front-to-back tilt)
+            let gamma = event.gamma; // Y-axis (side-to-side tilt)
+
+            // Normalize and clamp gamma for left/right rotation
+            let tiltX = Math.max(-45, Math.min(45, gamma));
             
-            // Increment the index, looping back to the start if necessary
-            currentIndex = (currentIndex + 1) % images.length;
+            // Normalize beta for front/back rotation and zoom
+            let tiltY = Math.max(-45, Math.min(45, beta));
+
+            // Calculate zoom scale based on beta (front-to-back tilt)
+            const minScale = 0.5;
+            const maxScale = 2.0;
+            let scaleFactor;
+
+            // Inverted zoom logic:
+            // Tilt forward (beta > 0) = zoom out (scale decreases)
+            // Tilt backward (beta < 0) = zoom in (scale increases)
+            if (beta >= 0) {
+                // Tilt forward: scale from 1.0 down to minScale
+                scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
+            } else {
+                // Tilt backward: scale from 1.0 up to maxScale
+                scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
+            }
+            
+            // Ensure the scale is within the defined range
+            scaleFactor = Math.max(minScale, Math.min(maxScale, scaleFactor));
+            
+            // Apply both rotation and zoom to the image
+            // Adjust values for phone orientation (portrait vs landscape)
+            if (window.innerHeight > window.innerWidth) { // Portrait mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltY}deg) rotateY(${-tiltX}deg) scale(${scaleFactor})`;
+            } else { // Landscape mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scaleFactor})`;
+            }
         }
 
-        // Start the slideshow when the page loads
+        // This function changes the image and is called by the timer
+        function changeImage() {
+            // Increment the index, looping back to the start if necessary
+            currentIndex = (currentIndex + 1) % images.length;
+            // Set the new image source
+            tiffyChar.src = images[currentIndex];
+        }
+
+        // Handle permissions for iOS 13+
+        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            accessButton.style.display = 'block';
+            accessButton.addEventListener('click', () => {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            accessButton.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            });
+        } else {
+            // For Android and other devices, just add the listener
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        // Start the slideshow timer when the page loads
         window.onload = function() {
-            // Set the first image immediately
-            changeImage();
-            
+            // Set the initial image
+            tiffyChar.src = images[0];
+
             // Start the slideshow, changing the image every 40 seconds
             setInterval(changeImage, 40000);
         };
