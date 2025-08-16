@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>TiffyAI Tilt and Zoom</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         body {
@@ -37,18 +36,6 @@
             transition: transform 0.1s linear; /* Smooth movement */
         }
         
-        #instructions {
-            position: absolute;
-            top: 20px;
-            width: 80%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 8px;
-            z-index: 100;
-        }
-
         #access-button {
             position: absolute;
             top: 50%;
@@ -63,32 +50,13 @@
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
-        #message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 200;
-            display: none;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="instructions">
-            <p>Tilt your phone to move me. Tilt forward to zoom out and backward to zoom in!</p>
-        </div>
         <img id="tiffy-char" src="https://tiffyai.github.io/Install/tifts-removebg-preview.png" alt="TiffyAI Character">
         <button id="access-button" style="display: none;">Grant Motion Access</button>
     </div>
-
-    <div id="message-box"></div>
 
     <script>
         // Get the image element
@@ -97,15 +65,6 @@
         // Check for device orientation support and handle permissions
         let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
         let accessButton = document.getElementById('access-button');
-        let messageBox = document.getElementById('message-box');
-
-        function showMessage(message) {
-            messageBox.textContent = message;
-            messageBox.style.display = 'block';
-            setTimeout(() => {
-                messageBox.style.display = 'none';
-            }, 3000);
-        }
 
         function handleOrientation(event) {
             let beta = event.beta; // X-axis (front-to-back tilt)
@@ -154,14 +113,10 @@
                         if (permissionState === 'granted') {
                             window.addEventListener('deviceorientation', handleOrientation);
                             accessButton.style.display = 'none';
-                            showMessage("Motion access granted!");
-                        } else {
-                            showMessage("Motion access denied. Game will not work.");
                         }
                     })
                     .catch(error => {
                         console.error(error);
-                        showMessage("An error occurred. Motion access not granted.");
                     });
             });
         } else {
