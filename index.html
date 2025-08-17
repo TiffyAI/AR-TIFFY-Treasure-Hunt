@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AR Treasure Hunt</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      .hud-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.5); /* The glass box */
+        border-radius: 10px;
+        padding: 10px 20px;
+        z-index: 10;
+      }
+      #arrow {
+        font-size: 2.5em;
+        color: #00bfff;
+        transition: transform 0.2s; /* Smooth rotation */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud-container">
+      <div id="arrow">⬆️</div>
+    </div>
+
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs='sourceType: webcam; debugUIEnabled: false;'
+      treasure-hunt>
+
+      <a-camera look-controls></a-camera>
+
+      <a-text
+        id="message"
+        value="✅ Treasure Found!"
+        color="lime"
+        align="center"
+        position="0 0 -2"
+        scale="1 1 1"
+        visible="false"></a-text>
+
+      <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false;"></a-entity>
+    </a-scene>
+
+    <script>
+      // The A-Frame component logic
+      AFRAME.registerComponent('treasure-hunt', {
+        init: function () {
+          this.message = document.querySelector('#message');
+          this.sound = document.querySelector('#claim-sound');
+          this.camera = document.querySelector('a-camera');
+          this.arrowDiv = document.querySelector('#arrow');
+          this.spawnCoin();
+
+          // Blink arrow
+          let isVisible = true;
+          setInterval(() => {
+            isVisible = !isVisible;
+            this.arrowDiv.style.visibility = isVisible ? 'visible' : 'hidden';
+          }, 500);
+        },
+        tick: function () {
+          if (!this.coin) return;
+
+          const coinPos = this.coin.object3D.position.clone();
+          const camPos = this.camera.object3D.position.clone();
+          const camRotY = this.camera.object3D.rotation.y;
+
+          // Manually calculate the angle and update the CSS
+          // The angle is relative to the camera's rotation
+          const angle = Math.atan2(coinPos.x - camPos.x, coinPos.z - camPos.z) - camRotY;
+          this.arrowDiv.style.transform = `rotateZ(-${angle}rad)`;
+
+          // Check distance
+          const distance = camPos.distanceTo(coinPos);
+          if (distance < 1) { 
+              this.collectTreasure();
+          }
+        },
+        spawnCoin: function () {
+          // Remove old coin if exists
+          if (this.coin && this.coin.parentNode) {
+            this.coin.parentNode.removeChild(this.coin);
+          }
+
+          // Create new coin entity
+          const coin = document.createElement('a-entity');
+          coin.setAttribute('id', 'coin');
+          coin.setAttribute('src', 'https://tiffyai.github.io/TiffyAI-Token.png'); // Your specific URL
+          coin.setAttribute('scale', '0.5 0.5 0.5');
+
+          // Random position in front of the camera, much closer for indoor use
+          const randX = (Math.random() * 2) - 1; // From -1 to 1 meter
+          const randZ = (Math.random() * -2) - 1; // From -3 to -1 meter
+          coin.setAttribute('position', `${randX} 1 ${randZ}`); // 1 meter high to make it visible
+
+          // Add click listener
+          coin.addEventListener('click', () => this.collectTreasure());
+
+          document.querySelector('a-scene').appendChild(coin);
+          this.coin = coin;
+        },
+        collectTreasure: function () {
+          if (!this.coin) return;
+          this.sound.components.sound.playSound();
+          this.message.setAttribute('visible', true);
+
+          // Hide message after 2s and spawn next coin
+          setTimeout(() => {
+            this.message.setAttribute('visible', false);
+            this.spawnCoin();
+          }, 2000);
+
+          this.coin.parentNode.removeChild(this.coin);
+          this.coin = null;
+        }
+      });
+    </script>
+  </body>
+</html>
