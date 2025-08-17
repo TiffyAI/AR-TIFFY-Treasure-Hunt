@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title>TiffyAI AR Treasure Hunt</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script>
@@ -8,7 +9,7 @@
         init: function () {
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
-          this.camera = document.querySelector('[gps-new-camera]');
+          this.camera = document.querySelector('[camera]');
           this.arrowContainer = document.querySelector('#arrow-container');
           this.arrowText = document.querySelector('#arrow-text');
           this.spawnCoin();
@@ -27,7 +28,9 @@
 
             // Check distance
             const distance = camPos.distanceTo(coinPos);
-            if (distance < 5) { // Adjusted distance check to 5 meters for better user experience
+            
+            // This logic is for the distance-based collection (optional, can also be click)
+            if (distance < 1) { 
                 this.collectTreasure();
             }
         },
@@ -44,10 +47,10 @@
           coin.setAttribute('scale', '0.01 0.01 0.01');
           coin.setAttribute('rotation', '0 90 0');
 
-          // Placeholder coordinates for South Africa (adjust if needed for your specific testing location)
-          const randLat = -33.9249 + (Math.random() - 0.5) * 0.0001;
-          const randLon = 18.4241 + (Math.random() - 0.5) * 0.0001;
-          coin.setAttribute('gps-entity-place', `latitude: ${randLat}; longitude: ${randLon};`);
+          // Random position in front of the camera, on a flat plane (X and Z)
+          const randX = (Math.random() * 6) - 3;
+          const randZ = (Math.random() * -6) - 1;
+          coin.setAttribute('position', `${randX} 0 ${randZ}`);
 
           // Add click listener
           coin.addEventListener('click', () => this.collectTreasure());
@@ -78,7 +81,7 @@
       arjs='sourceType: webcam; debugUIEnabled: false;'
       treasure-hunt>
 
-      <a-camera gps-new-camera rotation-reader>
+      <a-camera look-controls>
         <a-entity id="glass-box" position="0 -0.5 -1" scale="0.2 0.2 0.2">
           <a-plane
             material="shader: standard; roughness: 0; metalness: 0; opacity: 0.3; color: black; transparent: true;"
@@ -87,7 +90,7 @@
             position="0 0 -0.1">
           </a-plane>
 
-          <a-entity id="arrow-container" look-at="#coin">
+          <a-entity id="arrow-container" look-at="#coin" position="0 0 0.1">
             <a-text
               id="arrow-text"
               value="⬆️"
