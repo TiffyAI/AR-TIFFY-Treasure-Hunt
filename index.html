@@ -1,115 +1,97 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Treasure Hunt</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-ar-hit-test@1.0.0/build/aframe-ar-hit-test.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script>
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
-          this.camera = document.querySelector('[camera]');
+          this.arrow = document.querySelector('#arrow-text');
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
-          this.arrow = document.querySelector('#arrow');
-          this.lastCoin = null;
-
-          // Event listener for placing the first coin on a detected surface
-          this.el.addEventListener('ar-hit-test-result', (evt) => {
-            if (!this.lastCoin && evt.detail.hit) {
-              const position = evt.detail.hit.position;
-              this.spawnCoin(position);
-            }
-          });
+          this.camera = document.querySelector('[gps-new-camera]');
+          this.spawnCoin();
 
           // Blink arrow
           setInterval(() => {
-            if (this.arrow) {
-              const visible = this.arrow.getAttribute('visible');
-              this.arrow.setAttribute('visible', !visible);
-            }
+            const visible = this.arrow.getAttribute('visible');
+            this.arrow.setAttribute('visible', !visible);
           }, 500);
         },
         tick: function () {
-          if (!this.lastCoin) return;
+          if (!this.coin) return;
 
+          const coinPos = this.coin.object3D.position.clone();
           const camPos = this.camera.object3D.position.clone();
-          const coinPos = this.lastCoin.object3D.position.clone();
-          
+
           // Rotate arrow toward coin
           this.arrow.object3D.lookAt(coinPos);
 
           // Distance check
           const distance = camPos.distanceTo(coinPos);
-          if (distance < 0.5) { // Adjusted for a more reasonable close distance
+          if (distance < 1) {
             this.arrow.setAttribute('color', 'lime');
+            this.collectTreasure();
           } else {
             this.arrow.setAttribute('color', '#00BFFF');
           }
         },
-        spawnCoin: function (position) {
-          // Remove old coin if it exists
-          if (this.lastCoin && this.lastCoin.parentNode) {
-            this.lastCoin.parentNode.removeChild(this.lastCoin);
+        spawnCoin: function () {
+          // Remove old coin if exists
+          if (this.coin && this.coin.parentNode) {
+            this.coin.parentNode.removeChild(this.coin);
           }
 
           // Create new coin entity
           const coin = document.createElement('a-entity');
           coin.setAttribute('id', 'coin');
-          coin.setAttribute('gltf-model', 'https://raw.githubusercontent.com/a-h/a-frame-3d-model/main/coin/scene.gltf'); // A-Frame compatible coin model
-          coin.setAttribute('scale', '0.01 0.01 0.01'); // Adjust scale for the gltf model
+          coin.setAttribute('gltf-model', 'https://raw.githubusercontent.com/a-h/a-frame-3d-model/main/coin/scene.gltf');
+          coin.setAttribute('scale', '0.01 0.01 0.01');
           coin.setAttribute('rotation', '0 90 0');
-          coin.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-          coin.setAttribute('class', 'clickable'); // Add a class for raycaster
 
-          // Click to collect
-          coin.addEventListener('click', () => {
-            this.collectTreasure();
-          });
+          // Use random coordinates for location-based AR
+          const randLat = 34.052235 + (Math.random() - 0.5) * 0.0001; // Example: Los Angeles
+          const randLon = -118.243683 + (Math.random() - 0.5) * 0.0001;
+          coin.setAttribute('gps-entity-place', `latitude: ${randLat}; longitude: ${randLon};`);
+
+          // Add click listener
+          coin.addEventListener('click', () => this.collectTreasure());
 
           document.querySelector('a-scene').appendChild(coin);
-          this.lastCoin = coin;
+          this.coin = coin;
         },
         collectTreasure: function () {
-          if (!this.lastCoin) return;
-
+          if (!this.coin) return;
           this.sound.components.sound.playSound();
           this.message.setAttribute('visible', true);
 
           // Hide message after 2s and spawn next coin
           setTimeout(() => {
             this.message.setAttribute('visible', false);
-            const randX = (Math.random() * 3) - 1.5;
-            const randZ = (Math.random() * -3) - 1.5;
-            const newPos = { x: randX, y: 0, z: randZ };
-            this.spawnCoin(newPos);
+            this.spawnCoin();
           }, 2000);
 
-          this.lastCoin.parentNode.removeChild(this.lastCoin);
-          this.lastCoin = null;
+          this.coin.parentNode.removeChild(this.coin);
+          this.coin = null;
         }
       });
     </script>
   </head>
   <body style="margin: 0; overflow: hidden;">
     <a-scene
-      webxr="optionalFeatures: hit-test, dom-overlay; requiredFeatures: local;"
-      ar-hit-test="target-id: floor;"
       vr-mode-ui="enabled: false"
-      raycaster="objects: .clickable"
-      cursor="rayOrigin: mouse"
+      arjs='sourceType: webcam; debugUIEnabled: false;'
       treasure-hunt>
       
-      <a-entity camera look-controls></a-entity>
+      <a-camera gps-new-camera></a-camera>
 
       <a-text
-        id="arrow"
+        id="arrow-text"
         value="⬆️"
         color="#00BFFF"
         align="center"
         scale="0.5 0.5 0.5"
-        position="0 0 -1"
-        look-at="#coin"
-        animation-mixer></a-text>
+        position="0 0 -1"></a-text>
 
       <a-text 
         id="message" 
@@ -121,7 +103,7 @@
         visible="false"></a-text>
 
       <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false;"></a-entity>
-      
+
     </a-scene>
   </body>
 </html>
