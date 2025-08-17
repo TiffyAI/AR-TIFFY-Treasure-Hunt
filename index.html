@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-image: url('https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/setting.jpg');
+        }
+
+        #tiffy-char {
+            position: absolute;
+            width: 1000px;
+            height: 1000px;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* Smooth movement from tilt controls */
+            transition: transform 0.1s linear, opacity 1s ease-in-out;
+            opacity: 0; /* Initially hidden for a fade-in effect */
+        }
+        
+        #access-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #E94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        /* Styles for the loading screen and instructions */
+        #loading-screen, #instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: white;
+            z-index: 100;
+        }
+
+        #instructions {
+            font-size: 1.5rem;
+            transition: opacity 2s ease-in-out;
+            opacity: 0;
+        }
+
+        #next-button {
+            position: absolute;
+            bottom: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #E94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <img id="tiffy-char" src="" alt="TiffyAI Character">
+        
+        <div id="loading-screen">Loading...</div>
+        <div id="instructions"></div>
+        <button id="next-button" style="display: none;">Next Image</button>
+        <button id="access-button" style="display: none;">Grant Motion Access</button>
+    </div>
+
+    <script>
+        // Get the image and UI elements
+        const tiffyChar = document.getElementById('tiffy-char');
+        const loadingScreen = document.getElementById('loading-screen');
+        const instructions = document.getElementById('instructions');
+        const nextButton = document.getElementById('next-button');
+        const accessButton = document.getElementById('access-button');
+
+        // Check for device orientation support and handle permissions
+        let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        // Array of image URLs for the slideshow
+        const images = [
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/over.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/ben.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/send.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/spr.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/wide.png",
+            "https://tiffyai.github.io/AR-TIFFY-Treasure-Hunt/wan.png"
+        ];
+        let currentIndex = 0;
+
+        // Function to preload all images
+        function preloadImages(imageArray) {
+            let promises = [];
+            for (let i = 0; i < imageArray.length; i++) {
+                promises.push(new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = imageArray[i];
+                }));
+            }
+            return Promise.all(promises);
+        }
+
+        // This function changes the image with a fade effect
+        function changeImage() {
+            // Fade out the current image
+            tiffyChar.style.opacity = 0;
+
+            // Wait for the fade-out to complete (1s) before changing the image source
+            setTimeout(() => {
+                // Set the new image source
+                currentIndex = (currentIndex + 1) % images.length;
+                tiffyChar.src = images[currentIndex];
+                
+                // Fade in the new image
+                tiffyChar.style.opacity = 1;
+            }, 1000); // Matches the CSS transition duration
+        }
+
+        // Function to play a synthesized voice
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1; // You can adjust this for a slower or faster pace
+                utterance.pitch = 1; // You can adjust this for a higher or lower pitch
+
+                // Find a suitable female voice
+                const voices = window.speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => voice.name.includes('female') || voice.name.includes('Feminine'));
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.warn("Speech synthesis is not supported in this browser.");
+            }
+        }
+
+        // This function handles the motion control, which will apply to the current image
+        function handleOrientation(event) {
+            let beta = event.beta; // X-axis (front-to-back tilt)
+            let gamma = event.gamma; // Y-axis (side-to-side tilt)
+
+            // Normalize and clamp gamma for left/right rotation
+            let tiltX = Math.max(-45, Math.min(45, gamma));
+            
+            // Normalize beta for front/back rotation and zoom
+            let tiltY = Math.max(-45, Math.min(45, beta));
+
+            // Calculate zoom scale based on beta (front-to-back tilt)
+            const minScale = 0.5;
+            const maxScale = 2.0;
+            let scaleFactor;
+
+            // Inverted zoom logic:
+            // Tilt the phone towards you (negative beta) to zoom in
+            // Tilt the phone away from you (positive beta) to zoom out
+            if (beta <= 0) {
+                // Tilt backward: scale from 1.0 up to maxScale
+                scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
+            } else {
+                // Tilt forward: scale from 1.0 down to minScale
+                scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
+            }
+            
+            // Ensure the scale is within the defined range
+            scaleFactor = Math.max(minScale, Math.min(maxScale, scaleFactor));
+            
+            // Apply both rotation and zoom to the image
+            if (window.innerHeight > window.innerWidth) { // Portrait mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltY}deg) rotateY(${-tiltX}deg) scale(${scaleFactor})`;
+            } else { // Landscape mode
+                tiffyChar.style.transform = `translate(-50%, -50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(${scaleFactor})`;
+            }
+        }
+
+        // Handle permissions for iOS 13+
+        if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            accessButton.style.display = 'block';
+            accessButton.addEventListener('click', () => {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            accessButton.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            });
+        } else {
+            // For Android and other devices, just add the listener
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        // Add a click listener for the manual "Next" button
+        nextButton.addEventListener('click', changeImage);
+
+        // Add a click listener to the game container to trigger voice synthesis
+        document.getElementById('game-container').addEventListener('click', () => {
+            speakText("Oh, you're interested?");
+        });
+
+        // Start the slideshow timer when the page loads
+        window.onload = function() {
+            // Preload all images before starting the app
+            preloadImages(images)
+                .then(() => {
+                    // Hide loading screen and show the app UI
+                    loadingScreen.style.display = 'none';
+                    nextButton.style.display = 'block';
+                    
+                    // Display the first image
+                    tiffyChar.src = images[0];
+                    tiffyChar.style.opacity = 1;
+                    
+                    // Show instructions briefly and then hide them
+                    instructions.innerHTML = "Tilt your phone to zoom!";
+                    instructions.style.opacity = 1;
+                    setTimeout(() => {
+                        instructions.style.opacity = 0;
+                    }, 5000);
+
+                    // Start the automatic slideshow timer
+                    setInterval(changeImage, 20000);
+                })
+                .catch(error => {
+                    console.error("Failed to preload images:", error);
+                    loadingScreen.innerHTML = "Error loading content.";
+                });
+        };
+    </script>
+</body>
+</html>
