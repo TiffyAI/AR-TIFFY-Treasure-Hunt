@@ -5,37 +5,55 @@
     <script>
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
-          const coin = document.querySelector('#coin');
-          const arrow = document.querySelector('#arrow');
+          this.coin = document.querySelector('#coin');
+          this.arrow = document.querySelector('#arrow-text');
+          this.camera = document.querySelector('[camera]');
+          this.message = document.querySelector('#message');
+          this.sound = document.querySelector('#claim-sound');
 
-          // Random X/Z around player
-          const randX = (Math.random() * 6) - 3; // between -3 and +3
-          const randZ = (Math.random() * -6) - 1; // between -1 and -7 in front
-
-          coin.setAttribute('position', `${randX} 0.05 ${randZ}`);
+          // Random X/Z placement
+          const randX = (Math.random() * 6) - 3;
+          const randZ = (Math.random() * -6) - 1;
+          this.coin.setAttribute('position', `${randX} 0.05 ${randZ}`);
 
           // Blink arrow
           setInterval(() => {
-            const visible = arrow.getAttribute('visible');
-            arrow.setAttribute('visible', !visible);
+            const visible = this.arrow.getAttribute('visible');
+            this.arrow.setAttribute('visible', !visible);
           }, 500);
 
-          this.coin = coin;
-          this.arrow = arrow;
-          this.camera = document.querySelector('[camera]');
+          // Click interaction
+          this.coin.addEventListener('click', () => this.collectTreasure());
         },
         tick: function () {
-          // Each frame, make arrow point to coin
+          if (!this.coin) return;
+
+          // Direction + rotation
           const cam = this.camera.object3D;
           const coinPos = new THREE.Vector3();
           const camPos = new THREE.Vector3();
           this.coin.object3D.getWorldPosition(coinPos);
           cam.getWorldPosition(camPos);
 
-          const dir = coinPos.clone().sub(camPos); // direction vector
+          const dir = coinPos.clone().sub(camPos);
           const angle = Math.atan2(dir.x, dir.z) * (180 / Math.PI);
+          this.arrow.object3D.rotation.set(0, THREE.MathUtils.degToRad(angle), 0);
 
-          this.arrow.setAttribute('rotation', `0 ${angle} 0`);
+          // Distance check
+          const distance = camPos.distanceTo(coinPos);
+          if (distance < 1) {
+            this.arrow.setAttribute('color', 'lime');
+            this.collectTreasure();
+          } else {
+            this.arrow.setAttribute('color', '#00BFFF');
+          }
+        },
+        collectTreasure: function () {
+          if (!this.coin) return; // already collected
+          this.sound.components.sound.playSound();
+          this.message.setAttribute('visible', true);
+          this.coin.parentNode.removeChild(this.coin);
+          this.coin = null;
         }
       });
     </script>
@@ -50,19 +68,40 @@
       <!-- Camera -->
       <a-entity camera></a-entity>
 
-      <!-- Coin (starts at 0 but script will move it randomly) -->
+      <!-- Coin -->
       <a-image 
         id="coin"
         src="https://tiffyai.github.io/TiffyAI-Token.png" 
         position="0 0.05 -1"
         scale="0.2 0.2 0.2"
-        rotation="-90 0 0">
+        rotation="-90 0 0"
+        class="clickable">
       </a-image>
 
-      <!-- Arrow always in front of camera -->
-      <a-entity id="arrow" position="0 -0.5 -1" rotation="0 0 0">
-        <a-text value="⬆️" color="red" align="center" scale="1.5 1.5 1.5"></a-text>
+      <!-- Arrow -->
+      <a-entity id="arrow" position="0 -0.5 -1">
+        <a-text 
+          id="arrow-text"
+          value="⬆️" 
+          color="#00BFFF" 
+          align="center" 
+          scale="1.5 1.5 1.5">
+        </a-text>
       </a-entity>
+
+      <!-- Message -->
+      <a-text 
+        id="message" 
+        value="✅ Treasure Found!" 
+        color="lime" 
+        align="center" 
+        position="0 2 -3"
+        scale="2 2 2"
+        visible="false">
+      </a-text>
+
+      <!-- Sound -->
+      <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false"></a-entity>
 
     </a-scene>
   </body>
