@@ -171,15 +171,15 @@
             const maxScale = 2.0;
             let scaleFactor;
 
-            // INVERTED ZOOM LOGIC
-            // Tilting forward (positive beta) will zoom OUT to minScale
-            // Tilting backward (negative beta) will zoom IN to maxScale
-            if (beta >= 0) {
-                // Tilt down/forward: beta goes from 0 to 90. We want scale to go from 1.0 down to minScale.
-                scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
-            } else {
-                // Tilt up/backward: beta goes from 0 to -90. We want scale to go from 1.0 up to maxScale.
+            // CORRECTED INVERTED ZOOM LOGIC
+            // Tilt the phone towards you (beta goes from 0 to -90) to zoom in
+            // Tilt the phone away from you (beta goes from 0 to 90) to zoom out
+            if (beta <= 0) {
+                // Tilt backward (beta is negative): Scale from 1.0 up to maxScale
                 scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
+            } else {
+                // Tilt forward (beta is positive): Scale from 1.0 down to minScale
+                scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
             }
             
             // Ensure the scale is within the defined range
