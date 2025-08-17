@@ -30,7 +30,7 @@
             position: absolute;
             width: 1000px;
             height: 1000px;
-            top: 60%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             /* Smooth movement from tilt controls */
@@ -140,8 +140,8 @@
         function speakText(text) {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0;
-                utterance.pitch = 0.7;
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
 
                 const voices = window.speechSynthesis.getVoices();
                 const femaleVoice = voices.find(voice => voice.name.includes('female') || voice.name.includes('Sensual'));
@@ -161,14 +161,14 @@
             let gamma = event.gamma; // Y-axis (side-to-side tilt)
 
             // Normalize and clamp gamma for left/right rotation
-            let tiltX = Math.max(-45, Math.min(45, gamma));
+            let tiltX = Math.max(-50, Math.min(45, gamma));
             
             // Normalize beta for front/back rotation and zoom
-            let tiltY = Math.max(-45, Math.min(45, beta));
+            let tiltY = Math.max(-50, Math.min(45, beta));
 
             // Calculate zoom scale based on inverted beta (front-to-back tilt)
-            const minScale = 0.5;
-            const maxScale = 2.5;
+            const minScale = 1;
+            const maxScale = 2.2;
             let scaleFactor;
 
             // CORRECTED INVERTED ZOOM LOGIC
