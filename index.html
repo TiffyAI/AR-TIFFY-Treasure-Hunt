@@ -6,6 +6,7 @@
     <script>
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
+          this.arrowContainer = document.querySelector('#arrow-container');
           this.arrow = document.querySelector('#arrow-text');
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
@@ -23,9 +24,6 @@
 
           const coinPos = this.coin.object3D.position.clone();
           const camPos = this.camera.object3D.position.clone();
-
-          // Rotate arrow toward coin
-          this.arrow.object3D.lookAt(coinPos);
 
           // Distance check
           const distance = camPos.distanceTo(coinPos);
@@ -49,8 +47,7 @@
           coin.setAttribute('scale', '0.01 0.01 0.01');
           coin.setAttribute('rotation', '0 90 0');
 
-          // Use random coordinates for location-based AR
-          const randLat = 34.052235 + (Math.random() - 0.5) * 0.0001; // Example: Los Angeles
+          const randLat = 34.052235 + (Math.random() - 0.5) * 0.0001;
           const randLon = -118.243683 + (Math.random() - 0.5) * 0.0001;
           coin.setAttribute('gps-entity-place', `latitude: ${randLat}; longitude: ${randLon};`);
 
@@ -85,13 +82,16 @@
       
       <a-camera gps-new-camera></a-camera>
 
-      <a-text
-        id="arrow-text"
-        value="⬆️"
-        color="#00BFFF"
-        align="center"
-        scale="0.5 0.5 0.5"
-        position="0 0 -1"></a-text>
+      <a-entity id="arrow-container" position="0 0 -5" look-at="#coin">
+          <a-text
+            id="arrow-text"
+            value="⬆️"
+            color="#00BFFF"
+            align="center"
+            scale="0.5 0.5 0.5"
+            position="0 0 0">
+          </a-text>
+      </a-entity>
 
       <a-text 
         id="message" 
