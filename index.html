@@ -5,39 +5,31 @@
     <script>
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
-          this.coin = document.querySelector('#coin');
           this.arrow = document.querySelector('#arrow-text');
-          this.camera = document.querySelector('[camera]');
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
-
-          // Random X/Z placement
-          const randX = (Math.random() * 6) - 3;
-          const randZ = (Math.random() * -6) - 1;
-          this.coin.setAttribute('position', `${randX} 0.05 ${randZ}`);
+          this.camera = document.querySelector('[camera]');
+          this.spawnCoin();
 
           // Blink arrow
           setInterval(() => {
             const visible = this.arrow.getAttribute('visible');
             this.arrow.setAttribute('visible', !visible);
           }, 500);
-
-          // Click interaction
-          this.coin.addEventListener('click', () => this.collectTreasure());
         },
         tick: function () {
           if (!this.coin) return;
 
-          // Direction + rotation
           const cam = this.camera.object3D;
           const coinPos = new THREE.Vector3();
           const camPos = new THREE.Vector3();
           this.coin.object3D.getWorldPosition(coinPos);
           cam.getWorldPosition(camPos);
 
+          // Rotate arrow toward coin (simple)
           const dir = coinPos.clone().sub(camPos);
           const angle = Math.atan2(dir.x, dir.z) * (180 / Math.PI);
-          this.arrow.object3D.rotation.set(0, THREE.MathUtils.degToRad(angle), 0);
+          this.arrow.object3D.rotation.y = THREE.MathUtils.degToRad(angle);
 
           // Distance check
           const distance = camPos.distanceTo(coinPos);
@@ -48,10 +40,41 @@
             this.arrow.setAttribute('color', '#00BFFF');
           }
         },
+        spawnCoin: function () {
+          // Remove old coin if exists
+          if (this.coin && this.coin.parentNode) {
+            this.coin.parentNode.removeChild(this.coin);
+          }
+
+          // Create new coin entity
+          const coin = document.createElement('a-image');
+          coin.setAttribute('id', 'coin');
+          coin.setAttribute('src', 'https://tiffyai.github.io/TiffyAI-Token.png');
+          coin.setAttribute('scale', '0.2 0.2 0.2');
+          coin.setAttribute('rotation', '-90 0 0');
+
+          // Random position
+          const randX = (Math.random() * 6) - 3;
+          const randZ = (Math.random() * -6) - 1;
+          coin.setAttribute('position', `${randX} 0.05 ${randZ}`);
+
+          // Click to collect
+          coin.addEventListener('click', () => this.collectTreasure());
+
+          document.querySelector('a-scene').appendChild(coin);
+          this.coin = coin;
+        },
         collectTreasure: function () {
-          if (!this.coin) return; // already collected
+          if (!this.coin) return;
           this.sound.components.sound.playSound();
           this.message.setAttribute('visible', true);
+
+          // Hide message after 2s and spawn next coin
+          setTimeout(() => {
+            this.message.setAttribute('visible', false);
+            this.spawnCoin();
+          }, 2000);
+
           this.coin.parentNode.removeChild(this.coin);
           this.coin = null;
         }
@@ -66,19 +89,9 @@
       treasure-hunt>
       
       <!-- Camera -->
-      <a-entity camera></a-entity>
+      <a-entity camera look-controls></a-entity>
 
-      <!-- Coin -->
-      <a-image 
-        id="coin"
-        src="https://tiffyai.github.io/TiffyAI-Token.png" 
-        position="0 0.05 -1"
-        scale="0.2 0.2 0.2"
-        rotation="-90 0 0"
-        class="clickable">
-      </a-image>
-
-      <!-- Arrow -->
+      <!-- Arrow in front of view -->
       <a-entity id="arrow" position="0 -0.5 -1">
         <a-text 
           id="arrow-text"
