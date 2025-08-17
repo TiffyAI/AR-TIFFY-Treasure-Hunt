@@ -176,10 +176,10 @@
             // Tilt the phone away from you (beta goes from 0 to 90) to zoom out
             if (beta <= 0) {
                 // Tilt backward (beta is negative): Scale from 1.0 up to maxScale
-                scaleFactor = 1.0 - (-beta / 70) * (maxScale - 1.0);
+                scaleFactor = 1.0 - (-beta / 90) * (maxScale - 1.0);
             } else {
                 // Tilt forward (beta is positive): Scale from 1.0 down to minScale
-                scaleFactor = 1.0 + (beta / 70) * (1.0 - minScale);
+                scaleFactor = 1.0 + (beta / 90) * (1.0 + minScale);
             }
             
             // Ensure the scale is within the defined range
@@ -218,7 +218,7 @@
 
         // Add a click listener to the game container to trigger voice synthesis
         document.getElementById('game-container').addEventListener('click', () => {
-            speakText("Oh, just put it in honey");
+            speakText("Oh, hm, yes please");
         });
 
         // Start the slideshow timer when the page loads
