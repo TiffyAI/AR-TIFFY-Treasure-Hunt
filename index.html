@@ -167,8 +167,8 @@
             let tiltY = Math.max(-45, Math.min(45, beta));
 
             // Calculate zoom scale based on inverted beta (front-to-back tilt)
-            const minScale = 1.0;
-            const maxScale = 2.0;
+            const minScale = 0.7;
+            const maxScale = 1.8;
             let scaleFactor;
 
             // CORRECTED INVERTED ZOOM LOGIC
@@ -218,7 +218,7 @@
 
         // Add a click listener to the game container to trigger voice synthesis
         document.getElementById('game-container').addEventListener('click', () => {
-            speakText("Oh, hm, yes please");
+            speakText("hmmm, yes fuck me");
         });
 
         // Start the slideshow timer when the page loads
