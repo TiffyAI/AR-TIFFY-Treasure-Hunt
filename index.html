@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AR Treasure Hunt</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-ar-hit-test@1.0.0/build/aframe-ar-hit-test.js"></script>
+    <script>
+      AFRAME.registerComponent('treasure-hunt', {
+        init: function () {
+          this.camera = document.querySelector('[camera]');
+          this.message = document.querySelector('#message');
+          this.sound = document.querySelector('#claim-sound');
+          this.arrow = document.querySelector('#arrow');
+          this.lastCoin = null;
+
+          // Event listener for placing the first coin on a detected surface
+          this.el.addEventListener('ar-hit-test-result', (evt) => {
+            if (!this.lastCoin && evt.detail.hit) {
+              const position = evt.detail.hit.position;
+              this.spawnCoin(position);
+            }
+          });
+
+          // Blink arrow
+          setInterval(() => {
+            if (this.arrow) {
+              const visible = this.arrow.getAttribute('visible');
+              this.arrow.setAttribute('visible', !visible);
+            }
+          }, 500);
+        },
+        tick: function () {
+          if (!this.lastCoin) return;
+
+          const camPos = this.camera.object3D.position.clone();
+          const coinPos = this.lastCoin.object3D.position.clone();
+          
+          // Rotate arrow toward coin
+          this.arrow.object3D.lookAt(coinPos);
+
+          // Distance check
+          const distance = camPos.distanceTo(coinPos);
+          if (distance < 0.5) { // Adjusted for a more reasonable close distance
+            this.arrow.setAttribute('color', 'lime');
+          } else {
+            this.arrow.setAttribute('color', '#00BFFF');
+          }
+        },
+        spawnCoin: function (position) {
+          // Remove old coin if it exists
+          if (this.lastCoin && this.lastCoin.parentNode) {
+            this.lastCoin.parentNode.removeChild(this.lastCoin);
+          }
+
+          // Create new coin entity
+          const coin = document.createElement('a-entity');
+          coin.setAttribute('id', 'coin');
+          coin.setAttribute('gltf-model', 'https://raw.githubusercontent.com/a-h/a-frame-3d-model/main/coin/scene.gltf'); // A-Frame compatible coin model
+          coin.setAttribute('scale', '0.01 0.01 0.01'); // Adjust scale for the gltf model
+          coin.setAttribute('rotation', '0 90 0');
+          coin.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+          coin.setAttribute('class', 'clickable'); // Add a class for raycaster
+
+          // Click to collect
+          coin.addEventListener('click', () => {
+            this.collectTreasure();
+          });
+
+          document.querySelector('a-scene').appendChild(coin);
+          this.lastCoin = coin;
+        },
+        collectTreasure: function () {
+          if (!this.lastCoin) return;
+
+          this.sound.components.sound.playSound();
+          this.message.setAttribute('visible', true);
+
+          // Hide message after 2s and spawn next coin
+          setTimeout(() => {
+            this.message.setAttribute('visible', false);
+            const randX = (Math.random() * 3) - 1.5;
+            const randZ = (Math.random() * -3) - 1.5;
+            const newPos = { x: randX, y: 0, z: randZ };
+            this.spawnCoin(newPos);
+          }, 2000);
+
+          this.lastCoin.parentNode.removeChild(this.lastCoin);
+          this.lastCoin = null;
+        }
+      });
+    </script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      webxr="optionalFeatures: hit-test, dom-overlay; requiredFeatures: local;"
+      ar-hit-test="target-id: floor;"
+      vr-mode-ui="enabled: false"
+      raycaster="objects: .clickable"
+      cursor="rayOrigin: mouse"
+      treasure-hunt>
+      
+      <a-entity camera look-controls></a-entity>
+
+      <a-text
+        id="arrow"
+        value="⬆️"
+        color="#00BFFF"
+        align="center"
+        scale="0.5 0.5 0.5"
+        position="0 0 -1"
+        look-at="#coin"
+        animation-mixer></a-text>
+
+      <a-text 
+        id="message" 
+        value="✅ Treasure Found!" 
+        color="lime" 
+        align="center" 
+        position="0 0 -2"
+        scale="1 1 1"
+        visible="false"></a-text>
+
+      <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false;"></a-entity>
+      
+    </a-scene>
+  </body>
+</html>
