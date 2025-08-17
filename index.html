@@ -176,10 +176,10 @@
             // Tilt the phone away from you (beta goes from 0 to 90) to zoom out
             if (beta <= 0) {
                 // Tilt backward (beta is negative): Scale from 1.0 up to maxScale
-                scaleFactor = 1 + (beta / 90) * (minScale + 1.3);
+                scaleFactor = 1 + (beta / 90) * (minScale + 1.7);
             } else {
                 // Tilt forward (beta is positive): Scale from 1.0 down to minScale
-                scaleFactor = 1 - (-beta / 90) * (0.9 - maxScale);
+                scaleFactor = 1 - (-beta / 90) * (1 - maxScale);
             }
             
             // Ensure the scale is within the defined range
