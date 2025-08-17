@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>TiffyAI AR Treasure Hunt</title>
+    <title>AR Treasure Hunt</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script>
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
+          this.arrowText = document.querySelector('#arrow-text');
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
           this.camera = document.querySelector('[camera]');
-          this.arrowContainer = document.querySelector('#arrow-container');
-          this.arrowText = document.querySelector('#arrow-text');
           this.spawnCoin();
 
           // Blink arrow
@@ -21,21 +20,19 @@
           }, 500);
         },
         tick: function () {
-            if (!this.coin) return;
+          if (!this.coin) return;
 
-            const coinPos = this.coin.object3D.position.clone();
-            const camPos = this.camera.object3D.position.clone();
+          const coinPos = this.coin.object3D.position.clone();
+          const camPos = this.camera.object3D.position.clone();
 
-            // Check distance
-            const distance = camPos.distanceTo(coinPos);
-            
-            // This logic is for the distance-based collection (optional, can also be click)
-            if (distance < 1) { 
-                this.collectTreasure();
-            }
+          // Simple distance check to collect treasure
+          const distance = camPos.distanceTo(coinPos);
+          if (distance < 1) { 
+              this.collectTreasure();
+          }
         },
         spawnCoin: function () {
-          // Remove old coin if exists
+          // Remove old coin if it exists
           if (this.coin && this.coin.parentNode) {
             this.coin.parentNode.removeChild(this.coin);
           }
@@ -43,9 +40,9 @@
           // Create new coin entity
           const coin = document.createElement('a-entity');
           coin.setAttribute('id', 'coin');
-          coin.setAttribute('gltf-model', 'https://raw.githubusercontent.com/a-h/a-frame-3d-model/main/coin/scene.gltf');
-          coin.setAttribute('scale', '0.01 0.01 0.01');
-          coin.setAttribute('rotation', '0 90 0');
+          coin.setAttribute('src', 'https://tiffyai.github.io/TiffyAI-Token.png'); // Your specific URL
+          coin.setAttribute('scale', '0.2 0.2 0.2');
+          coin.setAttribute('rotation', '-90 0 0');
 
           // Random position in front of the camera, on a flat plane (X and Z)
           const randX = (Math.random() * 6) - 3;
@@ -112,7 +109,6 @@
         visible="false"></a-text>
 
       <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false;"></a-entity>
-
     </a-scene>
   </body>
 </html>
