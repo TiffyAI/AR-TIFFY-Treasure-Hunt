@@ -39,7 +39,7 @@
       arjs='sourceType: webcam; debugUIEnabled: false;'
       treasure-hunt>
 
-      <a-camera></a-camera>
+      <a-camera look-controls></a-camera>
 
       <a-text
         id="message"
@@ -75,10 +75,12 @@
 
           const coinPos = this.coin.object3D.position.clone();
           const camPos = this.camera.object3D.position.clone();
+          const camRotY = this.camera.object3D.rotation.y;
 
           // Manually calculate the angle and update the CSS
-          const angle = Math.atan2(coinPos.x - camPos.x, coinPos.z - camPos.z);
-          this.arrowDiv.style.transform = `rotateY(${angle}rad)`;
+          // The angle is relative to the camera's rotation
+          const angle = Math.atan2(coinPos.x - camPos.x, coinPos.z - camPos.z) - camRotY;
+          this.arrowDiv.style.transform = `rotateZ(-${angle}rad)`;
 
           // Check distance
           const distance = camPos.distanceTo(coinPos);
