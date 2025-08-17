@@ -2,33 +2,66 @@
   <head>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <script>
+      AFRAME.registerComponent('treasure-hunt', {
+        init: function () {
+          const coin = document.querySelector('#coin');
+          const arrow = document.querySelector('#arrow');
+
+          // Random X/Z around player
+          const randX = (Math.random() * 6) - 3; // between -3 and +3
+          const randZ = (Math.random() * -6) - 1; // between -1 and -7 in front
+
+          coin.setAttribute('position', `${randX} 0.05 ${randZ}`);
+
+          // Blink arrow
+          setInterval(() => {
+            const visible = arrow.getAttribute('visible');
+            arrow.setAttribute('visible', !visible);
+          }, 500);
+
+          this.coin = coin;
+          this.arrow = arrow;
+          this.camera = document.querySelector('[camera]');
+        },
+        tick: function () {
+          // Each frame, make arrow point to coin
+          const cam = this.camera.object3D;
+          const coinPos = new THREE.Vector3();
+          const camPos = new THREE.Vector3();
+          this.coin.object3D.getWorldPosition(coinPos);
+          cam.getWorldPosition(camPos);
+
+          const dir = coinPos.clone().sub(camPos); // direction vector
+          const angle = Math.atan2(dir.x, dir.z) * (180 / Math.PI);
+
+          this.arrow.setAttribute('rotation', `0 ${angle} 0`);
+        }
+      });
+    </script>
   </head>
   <body style="margin: 0; overflow: hidden;">
     <a-scene
       embedded
       vr-mode-ui="enabled: false"
-      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+      treasure-hunt>
       
       <!-- Camera -->
       <a-entity camera></a-entity>
 
-      <!-- Coin (resized properly) -->
-      <a-entity position="0 0 -1"> <!-- 1 meter in front -->
-        <a-image 
-          src="https://tiffyai.github.io/TiffyAI-Token.png" 
-          position="0 0.3 0"
-          scale="0.5 0.5 0.5"
-          rotation="0 0 0"
-          look-at="[camera]">
-        </a-image>
+      <!-- Coin (starts at 0 but script will move it randomly) -->
+      <a-image 
+        id="coin"
+        src="https://tiffyai.github.io/TiffyAI-Token.png" 
+        position="0 0.05 -1"
+        scale="0.2 0.2 0.2"
+        rotation="-90 0 0">
+      </a-image>
 
-        <!-- Floating emoji above coin -->
-        <a-text 
-          value="👀" 
-          color="yellow" 
-          align="center"
-          position="0 0.9 0">
-        </a-text>
+      <!-- Arrow always in front of camera -->
+      <a-entity id="arrow" position="0 -0.5 -1" rotation="0 0 0">
+        <a-text value="⬆️" color="red" align="center" scale="1.5 1.5 1.5"></a-text>
       </a-entity>
 
     </a-scene>
