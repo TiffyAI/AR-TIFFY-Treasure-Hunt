@@ -4,19 +4,70 @@
     <title>AR Treasure Hunt</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      .hud-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.5); /* The glass box */
+        border-radius: 10px;
+        padding: 10px 20px;
+        z-index: 10;
+      }
+      #arrow {
+        font-size: 2.5em;
+        color: #00bfff;
+        transition: transform 0.2s; /* Smooth rotation */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud-container">
+      <div id="arrow">⬆️</div>
+    </div>
+
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs='sourceType: webcam; debugUIEnabled: false;'
+      treasure-hunt>
+
+      <a-camera></a-camera>
+
+      <a-text
+        id="message"
+        value="✅ Treasure Found!"
+        color="lime"
+        align="center"
+        position="0 0 -2"
+        scale="1 1 1"
+        visible="false"></a-text>
+
+      <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false;"></a-entity>
+    </a-scene>
+
     <script>
+      // The A-Frame component logic
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
-          this.arrowText = document.querySelector('#arrow-text');
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
-          this.camera = document.querySelector('[camera]');
+          this.camera = document.querySelector('a-camera');
+          this.arrowDiv = document.querySelector('#arrow');
           this.spawnCoin();
 
           // Blink arrow
+          let isVisible = true;
           setInterval(() => {
-            const visible = this.arrowText.getAttribute('visible');
-            this.arrowText.setAttribute('visible', !visible);
+            isVisible = !isVisible;
+            this.arrowDiv.style.visibility = isVisible ? 'visible' : 'hidden';
           }, 500);
         },
         tick: function () {
@@ -25,14 +76,18 @@
           const coinPos = this.coin.object3D.position.clone();
           const camPos = this.camera.object3D.position.clone();
 
-          // Simple distance check to collect treasure
+          // Manually calculate the angle and update the CSS
+          const angle = Math.atan2(coinPos.x - camPos.x, coinPos.z - camPos.z);
+          this.arrowDiv.style.transform = `rotateY(${angle}rad)`;
+
+          // Check distance
           const distance = camPos.distanceTo(coinPos);
           if (distance < 1) { 
               this.collectTreasure();
           }
         },
         spawnCoin: function () {
-          // Remove old coin if it exists
+          // Remove old coin if exists
           if (this.coin && this.coin.parentNode) {
             this.coin.parentNode.removeChild(this.coin);
           }
@@ -44,7 +99,7 @@
           coin.setAttribute('scale', '0.2 0.2 0.2');
           coin.setAttribute('rotation', '-90 0 0');
 
-          // Random position in front of the camera, on a flat plane (X and Z)
+          // Random position in front of the camera
           const randX = (Math.random() * 6) - 3;
           const randZ = (Math.random() * -6) - 1;
           coin.setAttribute('position', `${randX} 0 ${randZ}`);
@@ -71,44 +126,5 @@
         }
       });
     </script>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
-    <a-scene
-      vr-mode-ui="enabled: false"
-      arjs='sourceType: webcam; debugUIEnabled: false;'
-      treasure-hunt>
-
-      <a-camera look-controls>
-        <a-entity id="glass-box" position="0 -0.5 -1" scale="0.2 0.2 0.2">
-          <a-plane
-            material="shader: standard; roughness: 0; metalness: 0; opacity: 0.3; color: black; transparent: true;"
-            width="2"
-            height="1"
-            position="0 0 -0.1">
-          </a-plane>
-
-          <a-entity id="arrow-container" look-at="#coin" position="0 0 0.1">
-            <a-text
-              id="arrow-text"
-              value="⬆️"
-              align="center"
-              scale="0.5 0.5 0.5"
-              position="0 0 0">
-            </a-text>
-          </a-entity>
-        </a-entity>
-      </a-camera>
-
-      <a-text
-        id="message"
-        value="✅ Treasure Found!"
-        color="lime"
-        align="center"
-        position="0 0 -2"
-        scale="1 1 1"
-        visible="false"></a-text>
-
-      <a-entity id="claim-sound" sound="src: url(claim.wav); autoplay: false;"></a-entity>
-    </a-scene>
   </body>
 </html>
