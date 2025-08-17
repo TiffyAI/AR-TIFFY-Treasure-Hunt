@@ -34,8 +34,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             /* Smooth movement from tilt controls */
-            transition: transform 0.1s linear, opacity 1s ease-in-out;
-            opacity: 0; /* Initially hidden for a fade-in effect */
+            transition: transform 0.1s linear;
         }
         
         #access-button {
@@ -131,30 +130,19 @@
             return Promise.all(promises);
         }
 
-        // This function changes the image with a fade effect
+        // This function changes the image directly without a fade effect
         function changeImage() {
-            // Fade out the current image
-            tiffyChar.style.opacity = 0;
-
-            // Wait for the fade-out to complete (1s) before changing the image source
-            setTimeout(() => {
-                // Set the new image source
-                currentIndex = (currentIndex + 1) % images.length;
-                tiffyChar.src = images[currentIndex];
-                
-                // Fade in the new image
-                tiffyChar.style.opacity = 1;
-            }, 1000); // Matches the CSS transition duration
+            currentIndex = (currentIndex + 1) % images.length;
+            tiffyChar.src = images[currentIndex];
         }
 
         // Function to play a synthesized voice
         function speakText(text) {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 1; // You can adjust this for a slower or faster pace
-                utterance.pitch = 1; // You can adjust this for a higher or lower pitch
+                utterance.rate = 1;
+                utterance.pitch = 1;
 
-                // Find a suitable female voice
                 const voices = window.speechSynthesis.getVoices();
                 const femaleVoice = voices.find(voice => voice.name.includes('female') || voice.name.includes('Feminine'));
                 if (femaleVoice) {
@@ -167,7 +155,7 @@
             }
         }
 
-        // This function handles the motion control, which will apply to the current image
+        // This function handles the motion control and inverted zoom
         function handleOrientation(event) {
             let beta = event.beta; // X-axis (front-to-back tilt)
             let gamma = event.gamma; // Y-axis (side-to-side tilt)
@@ -178,20 +166,20 @@
             // Normalize beta for front/back rotation and zoom
             let tiltY = Math.max(-45, Math.min(45, beta));
 
-            // Calculate zoom scale based on beta (front-to-back tilt)
+            // Calculate zoom scale based on inverted beta (front-to-back tilt)
             const minScale = 0.5;
             const maxScale = 2.0;
             let scaleFactor;
 
             // Inverted zoom logic:
-            // Tilt the phone towards you (negative beta) to zoom in
-            // Tilt the phone away from you (positive beta) to zoom out
-            if (beta <= 0) {
-                // Tilt backward: scale from 1.0 up to maxScale
-                scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
-            } else {
+            // Tilting forward (positive beta) will zoom out to minScale
+            // Tilting backward (negative beta) will zoom in to maxScale
+            if (beta >= 0) {
                 // Tilt forward: scale from 1.0 down to minScale
                 scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
+            } else {
+                // Tilt backward: scale from 1.0 up to maxScale
+                scaleFactor = 1.0 + (-beta / 90) * (maxScale - 1.0);
             }
             
             // Ensure the scale is within the defined range
@@ -242,9 +230,8 @@
                     loadingScreen.style.display = 'none';
                     nextButton.style.display = 'block';
                     
-                    // Display the first image
+                    // Display the first image without a fade effect
                     tiffyChar.src = images[0];
-                    tiffyChar.style.opacity = 1;
                     
                     // Show instructions briefly and then hide them
                     instructions.innerHTML = "Tilt your phone to zoom!";
