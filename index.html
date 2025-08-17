@@ -141,7 +141,7 @@
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.rate = -1;
-                utterance.pitch = 2;
+                utterance.pitch = 1.3;
 
                 const voices = window.speechSynthesis.getVoices();
                 const femaleVoice = voices.find(voice => voice.name.includes('female') || voice.name.includes('Sensual'));
@@ -167,7 +167,7 @@
             let tiltY = Math.max(-45, Math.min(45, beta));
 
             // Calculate zoom scale based on inverted beta (front-to-back tilt)
-            const minScale = 0.7;
+            const minScale = 0.5;
             const maxScale = 1.8;
             let scaleFactor;
 
@@ -176,7 +176,7 @@
             // Tilt the phone away from you (beta goes from 0 to 90) to zoom out
             if (beta <= 0) {
                 // Tilt backward (beta is negative): Scale from 1.0 up to maxScale
-                scaleFactor = 1.0 + (-beta / 90) * (maxScale + 1.0);
+                scaleFactor = 1.0 + (+beta / 90) * (maxScale + 1.0);
             } else {
                 // Tilt forward (beta is positive): Scale from 1.0 down to minScale
                 scaleFactor = 1.0 - (beta / 90) * (1.0 - minScale);
@@ -218,7 +218,7 @@
 
         // Add a click listener to the game container to trigger voice synthesis
         document.getElementById('game-container').addEventListener('click', () => {
-            speakText("hmmm, yes fuck me");
+            speakText("yeah, mmm, fuck me");
         });
 
         // Start the slideshow timer when the page loads
