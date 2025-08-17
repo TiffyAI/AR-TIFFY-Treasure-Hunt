@@ -6,33 +6,30 @@
     <script>
       AFRAME.registerComponent('treasure-hunt', {
         init: function () {
-          this.arrowContainer = document.querySelector('#arrow-container');
-          this.arrow = document.querySelector('#arrow-text');
           this.message = document.querySelector('#message');
           this.sound = document.querySelector('#claim-sound');
           this.camera = document.querySelector('[gps-new-camera]');
+          this.arrowContainer = document.querySelector('#arrow-container');
+          this.arrowText = document.querySelector('#arrow-text');
           this.spawnCoin();
 
           // Blink arrow
           setInterval(() => {
-            const visible = this.arrow.getAttribute('visible');
-            this.arrow.setAttribute('visible', !visible);
+            const visible = this.arrowText.getAttribute('visible');
+            this.arrowText.setAttribute('visible', !visible);
           }, 500);
         },
         tick: function () {
-          if (!this.coin) return;
+            if (!this.coin) return;
 
-          const coinPos = this.coin.object3D.position.clone();
-          const camPos = this.camera.object3D.position.clone();
+            const coinPos = this.coin.object3D.position.clone();
+            const camPos = this.camera.object3D.position.clone();
 
-          // Distance check
-          const distance = camPos.distanceTo(coinPos);
-          if (distance < 1) {
-            this.arrow.setAttribute('color', 'lime');
-            this.collectTreasure();
-          } else {
-            this.arrow.setAttribute('color', '#00BFFF');
-          }
+            // Check distance
+            const distance = camPos.distanceTo(coinPos);
+            if (distance < 5) { // Adjusted distance check to 5 meters for better user experience
+                this.collectTreasure();
+            }
         },
         spawnCoin: function () {
           // Remove old coin if exists
@@ -47,8 +44,9 @@
           coin.setAttribute('scale', '0.01 0.01 0.01');
           coin.setAttribute('rotation', '0 90 0');
 
-          const randLat = 34.052235 + (Math.random() - 0.5) * 0.0001;
-          const randLon = -118.243683 + (Math.random() - 0.5) * 0.0001;
+          // Placeholder coordinates for South Africa (adjust if needed for your specific testing location)
+          const randLat = -33.9249 + (Math.random() - 0.5) * 0.0001;
+          const randLon = 18.4241 + (Math.random() - 0.5) * 0.0001;
           coin.setAttribute('gps-entity-place', `latitude: ${randLat}; longitude: ${randLon};`);
 
           // Add click listener
@@ -79,25 +77,33 @@
       vr-mode-ui="enabled: false"
       arjs='sourceType: webcam; debugUIEnabled: false;'
       treasure-hunt>
-      
-      <a-camera gps-new-camera></a-camera>
 
-      <a-entity id="arrow-container" position="0 0 -5" look-at="#coin">
-          <a-text
-            id="arrow-text"
-            value="⬆️"
-            color="#00BFFF"
-            align="center"
-            scale="0.5 0.5 0.5"
-            position="0 0 0">
-          </a-text>
-      </a-entity>
+      <a-camera gps-new-camera rotation-reader>
+        <a-entity id="glass-box" position="0 -0.5 -1" scale="0.2 0.2 0.2">
+          <a-plane
+            material="shader: standard; roughness: 0; metalness: 0; opacity: 0.3; color: black; transparent: true;"
+            width="2"
+            height="1"
+            position="0 0 -0.1">
+          </a-plane>
 
-      <a-text 
-        id="message" 
-        value="✅ Treasure Found!" 
-        color="lime" 
-        align="center" 
+          <a-entity id="arrow-container" look-at="#coin">
+            <a-text
+              id="arrow-text"
+              value="⬆️"
+              align="center"
+              scale="0.5 0.5 0.5"
+              position="0 0 0">
+            </a-text>
+          </a-entity>
+        </a-entity>
+      </a-camera>
+
+      <a-text
+        id="message"
+        value="✅ Treasure Found!"
+        color="lime"
+        align="center"
         position="0 0 -2"
         scale="1 1 1"
         visible="false"></a-text>
